@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "exam-maker/exam_question_bank.schema.json",
+  "title": "Exam Maker Question Bank",
+  "description": "One question bank = one exam (one topic). Mirrors the 'Questions' sheet of Exam Question Template.xlsx: each item in 'questions' is one spreadsheet row, and its keys are the exact Excel header names. Blank cells are left out of the object (never written as null or \"\").",
+  "x-schemaVersion": "1.2",
+  "x-changelog": {
+    "1.2": "2026-09-26: added optional 'Shuffle Within Set' column (Yes = questions inside a Linked Set are shuffled on each form). 1.0 and 1.1 files remain valid.",
+    "1.1": "2026-09-25: added optional 'Set Intro' column (passage printed once above a Linked Set). 1.0 files remain valid.",
+    "1.0": "2026-09-24: first version."
+  },
+  "x-excel": {
+    "sheetName": "Questions",
+    "headerRow": 1,
+    "firstDataRow": 2,
+    "columnsMatchedBy": "header name (column order does not matter)",
+    "extraColumns": "ignored",
+    "otherSheets": "ignored",
+    "columns": [
+      "Question #",
+      "Alt",
+      "Linked Set",
+      "Set Intro",
+      "Shuffle Within Set",
+      "Question",
+      "Answer",
+      "Distractor 1",
+      "Distractor 2",
+      "Distractor 3",
+      "Distractor 4",
+      "Image",
+      "Image Height %"
+    ]
+  },
+  "x-imagesFolder": "A folder named 'images' in the same folder as the Excel file. 'Image' values are filenames inside it.",
+  "x-textFormatting": {
+    "description": "Allowed in 'Set Intro', 'Question', 'Answer' and 'Distractor' text. In Excel, native cell formatting (bold, italic, underline, superscript, subscript) is also accepted; when exporting to JSON, convert native formatting to these tags.",
+    "tags": {
+      "**text**": "bold",
+      "*text*": "italic",
+      "__text__": "underline",
+      "~text~": "subscript (H~2~O)",
+      "^text^": "superscript (10^5^)"
+    },
+    "math": "Simple symbols typed directly as Unicode: √ ± × ÷ ≤ ≥ ° µ and Greek letters."
+  },
+  "x-crossRowRules": [
+    "EXACTLY_25_QUESTIONS: there are exactly 25 distinct 'Question #' values in the bank, counting every Question # inside a Linked Set.",
+    "UNIQUE_ALT: within one 'Question #', every 'Alt' value is unique.",
+    "ONE_IMAGE_PER_QUESTION: 'Image' belongs to the whole Question #. It may appear on any one row of that Question #; if it appears on more than one row, all values must be the same file. The same applies to 'Image Height %'.",
+    "CONSISTENT_LINKED_SET: every row of a Question # has the same 'Linked Set' value (or all are blank).",
+    "SET_ORDER: the Question #s in a Linked Set are kept together on the exam as one block. By default they keep the order they first appear in the sheet; if the set's 'Shuffle Within Set' is Yes, their order inside the block is shuffled separately on each form (Form A included).",
+    "SHUFFLE_ON_FIRST: 'Shuffle Within Set' belongs to the whole Linked Set and is entered only on the set's first Question # (first in sheet order), on any one row of it; if several rows of that Question # have it, they must agree. Other Question #s in the set leave it blank.",
+    "SET_IMAGE_ON_FIRST: a Linked Set's shared image is entered only on the set's first Question # (first in sheet order). Other Question #s in the set have no image. It prints once above the whole set.",
+    "SET_INTRO_ON_FIRST: 'Set Intro' belongs to the whole Linked Set and is entered only on the set's first Question # (first in sheet order). It may appear on any one row of that Question #; if it appears on more than one row, the text must be identical. Other Question #s in the set have no Set Intro. It prints once above the set, before the set's image; when a set has an image but no Set Intro, the exam prints 'Use the figure below to answer questions X–Y.' instead.",
+    "IMAGE_EXISTS: every 'Image' filename exists in the images folder.",
+    "COMPARE_IDS_AS_TEXT: 'Question #', 'Alt' and 'Linked Set' values are compared as trimmed text, so 7 and \"7\" are the same."
+  ],
+  "type": "object",
+  "required": ["schemaVersion", "questions"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "description": "Format version of the question bank. Matches 'Schema version' on the Column Guide sheet.",
+      "enum": ["1.0", "1.1", "1.2"]
+    },
+    "title": {
+      "description": "Optional name of the bank or exam, such as 'BIO 110 – Exam 2'.",
+      "type": "string"
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 25,
+      "items": { "$ref": "#/$defs/questionRow" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "description": "Short identifier: a whole number or a short text label.",
+      "oneOf": [
+        { "type": "integer", "minimum": 1 },
+        { "type": "string", "minLength": 1, "maxLength": 40, "pattern": "\\S" }
+      ]
+    },
+    "choiceText": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "questionRow": {
+      "type": "object",
+      "required": ["Question #", "Alt", "Question", "Answer", "Distractor 1"],
+      "additionalProperties": true,
+      "properties": {
+        "Question #": {
+          "$ref": "#/$defs/id",
+          "description": "The question slot. Rows that share a Question # are alternates; the exam uses one of them. Printed question numbers come from the shuffled order, not from this value."
+        },
+        "Alt": {
+          "$ref": "#/$defs/id",
+          "description": "Names this version within its Question # (1, 2, 3 or a label like 'hard'). Shown in the app's alternate dropdown."
+        },
+        "Linked Set": {
+          "$ref": "#/$defs/id",
+          "description": "Question #s with the same value stay together as one block, in sheet order. Leave out for standalone questions. A set may contain a single Question # (to give it a Set Intro)."
+        },
+        "Set Intro": {
+          "$ref": "#/$defs/choiceText",
+          "description": "Added in 1.1. A passage or scenario printed once above a Linked Set, before its image. Only on the set's first Question # (see SET_INTRO_ON_FIRST). Requires 'Linked Set'. May contain line breaks (\\n) and formatting tags."
+        },
+        "Shuffle Within Set": {
+          "description": "Added in 1.2. 'Yes' = shuffle the order of the questions inside this Linked Set on each form; 'No' or left out = keep sheet order. Only on the set's first Question # (see SHUFFLE_ON_FIRST). 'Yes' requires 'Linked Set'. Case-insensitive; Y/N and TRUE/FALSE are also accepted.",
+          "type": "string",
+          "pattern": "^([Yy]([Ee][Ss])?|[Nn][Oo]?|[Tt][Rr][Uu][Ee]|[Ff][Aa][Ll][Ss][Ee])$"
+        },
+        "Question": {
+          "$ref": "#/$defs/choiceText",
+          "description": "The question stem. See x-textFormatting."
+        },
+        "Answer": {
+          "$ref": "#/$defs/choiceText",
+          "description": "The CORRECT answer, always. The app shuffles the choices and assigns letters A–E."
+        },
+        "Distractor 1": { "$ref": "#/$defs/choiceText", "description": "A wrong answer (required, so the minimum is 2 choices)." },
+        "Distractor 2": { "$ref": "#/$defs/choiceText", "description": "Optional wrong answer." },
+        "Distractor 3": { "$ref": "#/$defs/choiceText", "description": "Optional wrong answer. Requires Distractor 2." },
+        "Distractor 4": { "$ref": "#/$defs/choiceText", "description": "Optional wrong answer. Requires Distractor 3. Maximum 5 choices total." },
+        "Image": {
+          "type": "string",
+          "description": "Filename in the images folder. PNG, JPG, PDF or SVG. Printed above the question text with proportions kept, at most 20% of the page height.",
+          "pattern": "^[^/\\\\]+\\.([Pp][Nn][Gg]|[Jj][Pp][Ee]?[Gg]|[Pp][Dd][Ff]|[Ss][Vv][Gg])$"
+        },
+        "Image Height %": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "description": "Image height as a whole-number percent of the page height. Leave out for natural size, capped at 20. Only meaningful on a row that has 'Image'."
+        }
+      },
+      "dependentRequired": {
+        "Distractor 3": ["Distractor 2"],
+        "Distractor 4": ["Distractor 3"],
+        "Image Height %": ["Image"],
+        "Set Intro": ["Linked Set"]
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+# Generated exams, answer keys and scanner files: never upload (answer keys!).
+Output/
+
+# Converted exam question banks and their images (real exam content).
+Exam */
+
+# Python environment and caches (rebuilt automatically by Exam Maker.command).
+app/.venv/
+__pycache__/
+*.pyc
+
+# Personal window settings (last file used, titles, etc.).
+app/settings.json
+
+# macOS and Office clutter.
+.DS_Store
+~$*
