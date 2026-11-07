@@ -1,0 +1,13 @@
+# Conda environment for Exam Maker.
+# Created or updated by "Setup Exam Maker Environment.command" (also run automatically by "Exam Maker.command").
+# Python packages are listed once, in requirements.txt (pip installs them into this environment).
+name: exam_maker
+channels:
+  - conda-forge
+  - nodefaults        # conda-forge only: avoids Anaconda's "defaults" channel terms-of-service prompt
+dependencies:
+  - python=3.12
+  - tk                # Tk GUI toolkit for the window (tkinter)
+  - pip
+  - pip:
+      - -r requirements.txt

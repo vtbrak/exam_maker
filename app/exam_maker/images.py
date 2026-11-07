@@ -35,16 +35,16 @@ class LoadedImage:
 def _load(path: Path, mtime: float) -> LoadedImage:
     ext = path.suffix.lower()
     if ext in (".pdf", ".svg"):
-        import fitz  # PyMuPDF
+        import pymupdf
 
         _CACHE.mkdir(exist_ok=True)
         digest = hashlib.sha1(f"{path}|{mtime}".encode()).hexdigest()[:16]
         out = _CACHE / f"{digest}.png"
-        with fitz.open(path) as doc:
+        with pymupdf.open(path) as doc:
             page = doc[0]
             w, h = page.rect.width, page.rect.height
             if not out.exists():
-                pix = page.get_pixmap(matrix=fitz.Matrix(RASTER_DPI / 72, RASTER_DPI / 72), alpha=False)
+                pix = page.get_pixmap(matrix=pymupdf.Matrix(RASTER_DPI / 72, RASTER_DPI / 72), alpha=False)
                 pix.save(out)
         return LoadedImage(path, out, w, h)
 
